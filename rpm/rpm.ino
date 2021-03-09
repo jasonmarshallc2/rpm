@@ -78,6 +78,9 @@ void displayOut(int lineNum){
 
 void resetDisplay(){
   lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("   Idle!");
+  lcd.println(" Do Something!");
 }
 
 void loop() {
