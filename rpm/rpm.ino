@@ -1,15 +1,13 @@
 #include <LiquidCrystal.h>
 
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
-
-/*
- * 
- * spindle
+/* spindle
  * feed
 */
 
-int feed_pin = 2; // digital pin 2 is the hall pin
-float feed_thresh = 10.0; // set number of hall trips for RPM reading (higher improves accuracy)
+int feedPin = 2; // digital pin 2 is the hall pin
+int spindlePin = 3; // pin 3 is for the spindle hall sensor
+float feedThresh = 10.0; // set number of hall trips for RPM reading (higher improves accuracy)
 float start = micros();
 float feed_count = 1;
 bool on_state = false;
@@ -17,7 +15,7 @@ bool on_state = false;
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(115200);
-  pinMode(feed_pin, INPUT); // make the hall pin an input:
+  pinMode(feedPin, INPUT); // make the hall pin an input:
   lcd.begin(16, 2);  // set up the LCD's number of columns and rows:
 
 }
@@ -46,7 +44,7 @@ void resetDisplay(){
 
 void loop() {
 
-  if (digitalRead(feed_pin)==0){
+  if (digitalRead(feedPin)==0){
     if (on_state==false){
       on_state = true;
       feed_count+=1.0;
@@ -54,7 +52,7 @@ void loop() {
   } else{
     on_state = false;
   }
-  if (feed_count>=feed_thresh){
+  if (feed_count>=feedThresh){
     displayOut();
     start = micros();
     on_state = false;
