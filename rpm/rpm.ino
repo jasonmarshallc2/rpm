@@ -1,13 +1,16 @@
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 int feedPin = 2; // digital pin 2 is the hall pin
-int spindlePin = 3+;
+int spindlePin = 3;
 // set number of hall trips for RPM reading (higher improves accuracy)
 float hall_thresh = 5.0;
-
+unsigned long start;
+float feedCount = 1.0;
+  
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
+
   // make the hall pin an input:
   pinMode(feedPin, INPUT);
         // set up the LCD's number of columns and rows:
@@ -21,33 +24,37 @@ void setup() {
 // the loop routine runs over and over again forever:
 void loop() {
   // preallocate values for tach
-  float hall_count = 1.0;
-  unsigned long start;
+  feedCount = 1.0;
+
   start = 0;
   start = micros();
   bool on_state = false;
   // counting number of times the hall sensor is tripped
   // but without double counting during the same trip
-while(true){
-    if (digitalRead(feedPin)==0){
-      if (on_state==false){
-        on_state = true;
-        hall_count+=1.0;
+  while(true){
+      if (digitalRead(feedPin)==0){
+        if (on_state==false){
+          on_state = true;
+          feedCount+=1.0;
+        }
+      } else{
+        on_state = false;
       }
-    } else{
-      on_state = false;
-    }
-    if (hall_count>=hall_thresh){
-      break;
-    }
-} 
+      if (feedCount>=hall_thresh){
+        break;
+      }
+  }
+  updateDisplay(); 
+}
+
+void updateDisplay(){
   // print information about Time and RPM
   unsigned long end_time = micros();
   float time_passed = ((end_time-start)/1000000.0);
 Serial.print("Time Passed: ");
 Serial.print(time_passed);
 Serial.println("s");
-  float rpm_val = (hall_count/time_passed)*60.0;
+  float rpm_val = (feedCount/time_passed)*60.0;
   Serial.print(rpm_val);
   Serial.println(" RPM");
   delay(1);        // delay in between reads for stability
