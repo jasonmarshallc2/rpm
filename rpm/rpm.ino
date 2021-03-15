@@ -1,12 +1,13 @@
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
-int feedPin = 2; // digital pin 2 is the short wire
-int spindlePin = 3;
+int feedPin = 3; // digital pin 2 is the short wire
+int spindlePin = 2;
 // set number of hall trips for RPM reading (higher improves accuracy)
 int hall_thresh = 5;
 unsigned long feedStart = micros(); // used in rpm calculation
 unsigned long spindleStart = micros(); // used in rpm calculation
-unsigned long end_time = 0; // used to capture the amount of time it took to reach the # of magnet reads, set as hall_thresh
+unsigned long feedEndTime = 0; // used to capture the amount of time it took to reach the # of magnet reads, set as hall_thresh
+unsigned long spindleEndTime = 0; 
 bool feedOnState = false; // used to prevent dup counts
 bool spindleOnState = false; // used to prevent dup counts
 int feedCount = 0; // number of itterations through the count cycle
@@ -65,9 +66,19 @@ if counter is met, update the display, reset counter & start times
      resetSpindleVar();
      }
 
+// Clear the line if one reading has stopped
+if(micros() - (feedEndTime / 1000.0) > 5000){
+    lcd.setCursor(0,0);
+    lcd.print("                ");  
+}
+if(micros() - (spindleEndTime / 1000.0) > 5000){
+    lcd.setCursor(0,1);
+    lcd.print("                ");  
+}
+
 // When no magnets are read, clear the display and display a friendly message
 if(!pausedScreen){
-  if(millis() - (end_time /1000.0) > 10000){
+  if((millis() - (feedEndTime /1000.0) > 10000) && (millis() - (spindleEndTime /1000.0) > 10000)){
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print(" This is boring!");
@@ -106,18 +117,18 @@ void resetSpindleVar(){
  1 = the SPINDLE sensor
 */
 void updateDisplay(int row){
-  end_time = micros();
   float rpmVal = 0.0;
-//  lcd.clear();
   if(row == 0){
-    timePassedFeed = ((end_time-feedStart)/1000000.0);
+    feedEndTime = micros();
+    timePassedFeed = ((feedEndTime - feedStart)/1000000.0);
     rpmVal = (feedCount/timePassedFeed)*60.0;
     lcd.setCursor(0, 0);
     lcd.print("FEED ");
     lcd.print(int(rpmVal / 20)); // jerry add divide by number
     lcd.print(" .001/M          "); // jerry minutes?
   } else {
-    timePassedSpindle = ((end_time-spindleStart)/1000000.0);
+    spindleEndTime = micros();
+    timePassedSpindle = ((spindleEndTime - spindleStart)/1000000.0);
     rpmVal = (spindleCount/timePassedSpindle)*60.0;
     lcd.setCursor(0, 1);
     lcd.print("SPINDLE ");
